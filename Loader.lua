@@ -97,7 +97,8 @@ end
 function Library:CreateWindow(config)
 	config = config or {}
 	local windowName = config.Name or "Library Suite"
-	local windowVersion = config.Version or "v1.0.0"
+	local loadingTitle = config.LoadingTitle or "JojoHub Loader"
+	local loadingSubtitle = config.LoadingSubtitle or "by JojoHub Team"
 	local toggleKey = config.ToggleUIKeybind or "K"
 	
 	if config.ConfigurationSaving then
@@ -156,7 +157,7 @@ function Library:CreateWindow(config)
 	HubSubtitle.Size = UDim2.new(0, 200, 0, 14)
 	HubSubtitle.Position = UDim2.new(0, 16, 0, 26)
 	HubSubtitle.BackgroundTransparency = 1
-	HubSubtitle.Text = windowVersion
+	HubSubtitle.Text = loadingSubtitle
 	HubSubtitle.TextColor3 = Library.Theme.TextMuted
 	HubSubtitle.TextSize = 11
 	HubSubtitle.Font = Enum.Font.GothamMedium
@@ -465,7 +466,7 @@ function Library:CreateWindow(config)
 		function TabData:CreateToggle(options)
 			options = options or {}
 			local text = options.Name or "Toggle"
-			local toggled = options.Default or false
+			local toggled = options.CurrentValue or false -- UPDATED: Now supports CurrentValue from documentation
 			local callback = options.Callback or function() end
 			local flag = options.Flag
 
@@ -563,9 +564,13 @@ function Library:CreateWindow(config)
 		function TabData:CreateSlider(options)
 			options = options or {}
 			local text = options.Name or "Slider"
-			local min = options.Min or 0
-			local max = options.Max or 100
-			local default = options.Default or min
+			
+			-- UPDATED: Pulls Min and Max from your documented Range array style {0, 100}
+			local rangeTable = options.Range or {0, 100}
+			local min = rangeTable[1] or 0
+			local max = rangeTable[2] or 100
+			local default = options.CurrentValue or min -- UPDATED: Uses CurrentValue from documentation
+			
 			local callback = options.Callback or function() end
 			local flag = options.Flag
 
@@ -685,7 +690,7 @@ function Library:CreateWindow(config)
 		function TabData:CreateKeybind(options)
 			options = options or {}
 			local text = options.Name or "Keybind"
-			local currentKey = options.Default or "None"
+			local currentKey = options.CurrentKeybind or "None" -- UPDATED: Uses CurrentKeybind from documentation
 			local callback = options.Callback or function() end
 
 			if typeof(currentKey) == "EnumItem" then
