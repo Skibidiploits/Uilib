@@ -1,0 +1,36 @@
+
+loader
+local Jojo = https://raw.githubusercontent.com/Skibidiploits/Uilib/refs/heads/main/Loader
+
+#WINDOW
+
+Window
+local Window = JojoHub:CreateWindow({
+   Name = "JojoHub | Main Suite",
+   Icon = 0, -- Asset ID or Lucide name for the topbar icon. Use 0 for none.
+   LoadingTitle = "JojoHub Loader",
+   LoadingSubtitle = "by JojoHub Team",
+   ShowText = "JojoHub", -- The toggle action text displayed for mobile players
+   Theme = "Default", -- The visual color palette applied across the UI
+   
+   ToggleUIKeybind = "K", -- The hardware keybind used to hide or show the interface
+   
+   DisableHubPrompts = false, -- Suppresses integrated library popups
+   DisableBuildWarnings = false, -- Prevents version mismatch alerts from printing to the console
+   
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = "JojoHubConfigs", -- Creates a dedicated folder in your exploit directory
+      FileName = "GlobalSettings" -- The default save file name for player preferences
+   },
+   
+   Discord = {
+      Enabled = false, -- Prompts the user to join your community server on execution
+      Invite = "noinvitelink", -- Your specific Discord invite slug
+      RememberJoins = true -- Persists join state to prevent repeated prompting
+   },
+   
+   KeySystem = false, -- Set to true to route the interface behind an access key gate
+})
+
+#WINDOW FOR
