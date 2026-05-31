@@ -33,4 +33,376 @@ local Window = JojoHub:CreateWindow({
    KeySystem = false, -- Set to true to route the interface behind an access key gate
 })
 
-#WINDOW FOR
+#WINDOW OPTIONS
+
+Name
+Type: string
+
+Requirement: Required
+
+Description: The primary title displayed in the header text of the main window frame.
+
+Icon
+Type: number | string
+
+Description: The asset displayed in the topbar header next to the title. Accepts a standard Roblox Image ID (number), a Lucide icon identifier (string), or 0 if you do not want an icon to appear.
+
+LoadingTitle
+Type: string
+
+Description: The main, large heading text that appears centered on the splash loading screen when JojoHub is first executing.
+
+LoadingSubtitle
+Type: string
+
+Description: The smaller credit or version text displayed right underneath the LoadingTitle on the splash screen.
+
+ShowText
+Type: string
+
+Description: The text displayed on the floating action button for mobile users, allowing them to cleanly tap and unhide the user interface.
+
+Theme
+Type: string | table
+
+Description: Applies the visual style and color palette across the entire user interface. You can pass a preset string identifier or a dictionary containing custom Color3 values.
+
+ToggleUIKeybind
+Type: string | Enum.KeyCode
+
+Description: Defines the physical hardware key used by desktop players to instantly toggle the visibility of the user interface.
+
+DisableHubPrompts
+Type: boolean
+
+Description: When set to true, this completely suppresses any built-in system prompts or notification dialogs generated natively by the JojoHub core code.
+
+DisableBuildWarnings
+Type: boolean
+
+Description: Prevents JojoHub from pushing version mismatch or deprecation alerts into the developer console when your script version differs slightly from the interface engine build.
+
+ScriptID
+Type: string
+
+Description: A unique developer string used to link your local script execution to a central developer platform dashboard for usage analytics, remote keys, and data tracking.
+
+
+
+#KEY SYSTEM
+
+KeySystem
+Type: boolean
+
+Description: Enables or disables the integrated key verification overlay. If set to true, the main script interface will remain completely locked and invisible until the player enters a valid, working credential.
+
+KeySettings
+Type: object
+
+Description: The configuration dictionary that defines how your key system behaves, handles verification, and where it fetches or checks the correct password strings. This is only processed when KeySystem is explicitly enabled.
+
+Lua
+-- Complete KeySettings configuration layout
+KeySettings = {
+   Title = "JojoHub Access Verification",
+   Subtitle = "Key System",
+   Note = "Join our community discord to get your free access key!",
+   SaveKey = true, -- Automatically saves the key on the user's hardware so they don't have to re-enter it
+   Key = {"JojoKey_1234", "JojoFree_5678"} -- Can accept a single string or an array of valid keys
+}
+
+
+
+#CREATING TABS
+
+local Tab = Window:CreateTab("Tab Example", 4483362458) -- Arguments: Title, Image ID
+
+##lucide icon support
+
+Lucide Icon Support
+Instead of manually hunting down a Roblox image asset ID, you can pass a standard Lucide icon name string directly into any icon parameter.
+
+Lua
+local Tab = Window:CreateTab("Combat Features", "sword") -- Pass the Lucide string name directly
+⚠️ Compatibility Note: JojoHub supports a broad library of pre-compiled vector graphics. If a specific icon name fails to render, check the native icon build repository for availability.
+
+Secure Asset Isolation (Anti-Cheat Bypass)
+Many modern Roblox anti-cheats dynamically scan the game environment for standard Lucide asset folders or specific public Roblox asset IDs to detect if a script hub is injected.
+
+If you are developing scripts for games with aggressive client-side detection, do not use public image IDs or native Lucide string bindings. Instead, utilize custom localized assets.
+
+Using getcustomasset()
+By turning on Secure Mode in JojoHub and placing your image files directly into your executor's local workspace folder, you can safely load assets completely hidden from the game's security engine.
+
+Lua
+-- Bypassing detection by pulling an image directly from your local exploit directory
+local SecureIcon = getcustomasset("JojoHub/Assets/my_custom_icon.png")
+
+local Tab = Window:CreateTab("Secure Tab", SecureIcon)
+Element Customization: Sections
+Once your tab is created securely, you can group related elements together using visual containers called Sections. This keeps long feature lists clean and highly organized.
+
+Lua
+local Section = Tab:CreateSection("Auto Farm Configuration")
+
+
+#CONTENT ORGANIZATION
+
+
+Create a section
+Sections add a bold, labeled group header inside a specific tab. This is perfect for categorizing different modules of your script (e.g., separating "Combat" from "Movement").
+
+Lua
+local Section = Tab:CreateSection("Section Example")
+Update a section
+You can dynamically change the label text of an existing section at any point while the script is running.
+
+Lua
+Section:Set("New Section Title")
+Create a divider
+Dividers add a clean, low-profile horizontal rule inside a tab to visually separate your interactive elements and prevent the UI from looking cluttered.
+
+Lua
+local Divider = Tab:CreateDivider()
+Update a divider
+You can dynamically hide or show a divider by modifying its visibility state directly.
+
+Lua
+Divider:Set(false) -- Hides the divider (set to true to show it again)
+
+
+#UI VISIBILITY WINDOW CONTROLS
+
+Window Controls
+JojoHub provides developers with direct library functions to manage the runtime status, visibility, and cleanup of the interface without relying strictly on user keybind interactions.
+
+Toggle UI Visibility
+You can manually trigger the hide/show transition of the main user interface window directly from your execution thread. This is useful for building custom macro scripts or custom close buttons.
+
+Lua
+JojoHub:ToggleUI()
+Destroy the Interface
+When a player unloads your script or completes their session, you can perform a full cleanup. Calling the destroy function completely wipes all generated ScreenGuis, removes active event listeners, and disconnects input pipelines to keep memory clear.
+
+Lua
+JojoHub:Destroy()
+
+
+## INTERACTIVE ELEMENTS
+
+Interactive Elements
+How to create and interact with buttons, toggles, sliders, and other actionable features inside your tabs.
+
+Button
+Buttons are one-click triggers used to run immediate actions, like teleporting instantly, clean-killing active processes, or toggling an instant script state.
+
+Lua
+local Button = Tab:CreateButton({
+   Name = "Button Example",
+   Callback = function()
+      -- The custom code that fires right when a user clicks the button
+      print("Button clicked!")
+   end,
+})
+Update a Button
+You can dynamically change the text shown on an active button label at any point while your script is running.
+
+Lua
+Button:Set("Updated Button Label")
+
+## toggle
+
+Toggle
+Toggles allow users to switch a feature on or off. They return a boolean value (true or false) to the callback function whenever they are clicked.
+
+Lua
+local Toggle = Tab:CreateToggle({
+   Name = "Toggle Example",
+   CurrentValue = false,
+   Flag = "Toggle1", -- The unique identifier string for the configuration file. Ensure no overlap with other elements!
+   Callback = function(Value)
+      -- The function that fires when the state changes
+      -- The 'Value' variable is a boolean (true/false) based on the switch position
+      print("Toggle state changed to:", Value)
+   end,
+})
+Update a Toggle
+You can programmatically force a toggle switch to change its state via your script thread without forcing the player to manually click it.
+
+Lua
+Toggle:Set(true) -- Instantly switches the state to true and executes the callback
+
+#colorpicker
+
+Color picker
+Color pickers give users a full palette interface. Whenever the user repositions the color marker, the element returns a standard Roblox Color3.fromRGB value to your execution thread.
+
+Lua
+local ColorPicker = Tab:CreateColorPicker({
+    Name = "Color Picker",
+    Color = Color3.fromRGB(255, 255, 255),
+    Flag = "ColorPicker1", -- Unique identifier for configuration saving; ensures states don't overlap
+    Callback = function(Value)
+        -- This function fires every single time the color selection is adjusted
+        -- The 'Value' variable returns a standard Color3 value
+        print("Selected color changed to:", Value)
+    end
+})
+Update a color picker
+You can programmatically force the color picker to update its selected color grid and update the saved data model automatically.
+
+Lua
+ColorPicker:Set(Color3.fromRGB(255, 0, 0)) -- Instantly changes the selected color to pure red
+
+##slider
+
+Next up on our interactive elements roster is the Slider!
+
+Sliders are essential for features that require a precise range of values rather than a simple on/off switch—making them perfect for adjusting walk speeds, jump heights, teleport delays, or custom FOV circles.
+
+Here is the clean documentation page for the JojoHub Slider:
+
+Slider
+Sliders provide a draggable bar interface that returns an integer or decimal number to your callback function based on the selector's current position.
+
+Lua
+local Slider = Tab:CreateSlider({
+   Name = "Slider Example",
+   Range = {0, 100},
+   Increment = 10,
+   Suffix = "Bananas",
+   CurrentValue = 10,
+   Flag = "Slider1", -- The unique identifier string for the configuration file. Ensure no overlap!
+   Callback = function(Value)
+      -- The function that fires whenever the slider value changes
+      -- The 'Value' variable is a number correlating to the slider's current position
+      print("Slider value changed to:", Value)
+   end,
+})
+Update a slider
+You can programmatically force the slider handle to snap to a new position and update its value via your code.
+
+Lua
+Slider:Set(50) -- Moves the slider directly to the integer value of 50
+
+
+##input text box
+
+Input (Text Box)
+Input fields allow users to type in custom strings or numeric data. The callback function fires every single time the user finishes typing and presses enter (or clicks away from the box).
+
+Lua
+local Input = Tab:CreateInput({
+   Name = "Input Example",
+   PlaceholderText = "Enter text here...",
+   RemoveTextAfterFocusLost = false, -- If set to true, clears the text box immediately after pressing enter
+   Callback = function(Text)
+      -- This function fires when the user confirms their typed text
+      -- The 'Text' variable is a string containing whatever the user typed
+      print("User entered text:", Text)
+   end,
+Update an Input Field
+You can programmatically change the placeholder text or replace the active string displayed inside the text box layout via your code thread.
+
+Lua
+Input:Set("New Display Text") -- Replaces the text box string and automatically updates the layout
+
+##Dropdown
+Dropdown
+Dropdowns present a clean, expandable list of options for users to choose from. This is perfect for selecting specific game zones, choosing targeting modes (like Head/Torso), or switching between different item filters.
+
+Lua
+local Dropdown = Tab:CreateDropdown({
+   Name = "Dropdown Example",
+   Options = {"Option 1", "Option 2"},
+   CurrentOption = {"Option 1"},
+   MultipleOptions = false, -- Set to true if you want users to select more than one item
+   Flag = "Dropdown1", -- Unique identifier for configuration saving
+   Callback = function(Options)
+      -- The function that fires when the selected choice changes
+      -- 'Options' is a table of strings containing the currently selected items
+      print("Selected option changed to:", Options[1])
+   end,
+})
+Refresh the option list
+You can dynamically completely replace the items inside an existing dropdown list while your script is running (e.g., updating a list of active players in the server).
+
+Lua
+Dropdown:Refresh({"New Option 1", "New Option 2"})
+Set the selected option programmatically
+You can force the dropdown to select a specific option through code.
+
+Lua
+Dropdown:Set({"Option 2"}) -- Instantly shifts selection to "Option 2"
+💡 Note: Calling Dropdown:Set() will automatically trigger the dropdown's callback function.
+
+##keybind
+Keybind
+Keybinds allow users to map specific hardware keys (like Q, E, or RightCtrl) to execute code instantly. This is the standard way to map features like a teleport click, fly toggle, or menu visibility switcher.
+
+Lua
+local Keybind = Tab:CreateKeybind({
+   Name = "Keybind Example",
+   CurrentKeybind = "Q",
+   HoldToInteract = false, -- Set to true if the action should only run while the key is actively held down
+   Flag = "Keybind1", -- Unique identifier for configuration saving
+   Callback = function(IsPressed)
+      -- If HoldToInteract is true, 'IsPressed' returns true when held, and false when released
+      print("Keybind triggered! State:", IsPressed)
+   end,
+})
+Update a keybind programmatically
+You can reassign the active keybound to a completely different hardware key via code.
+
+Lua
+Keybind:Set("RightCtrl") -- Changes the bound action key to Right Control
+
+
+##labels and paragraphs
+
+Label
+Labels are simple, single-line text containers. They are ideal for showing static information, displaying a script's version number, or outputting a live status (e.g., "Status: Farming...").
+
+Lua
+local Label = Tab:CreateLabel("Label Example")
+Update a Label
+You can dynamically rewrite the string text of an existing label at any moment while your script is running. This makes them incredibly useful for building real-time data logs or state readouts.
+
+Lua
+Label:Set("Updated Label Text")
+Paragraph
+When a single line isn't enough, Paragraphs give you a multi-line text block complete with a distinct header title. This is the cleanest way to display detailed rules, patch notes, or setup instructions for complex scripts.
+
+Lua
+local Paragraph = Tab:CreateParagraph({
+   Title = "Paragraph Header", 
+   Content = "This is the main body text. You can add detailed explanations, usage notes, or troubleshooting steps here for your players."
+})
+Update a Paragraph
+You can programmatically change both the header title and the body content of a paragraph simultaneously using a configuration table.
+
+Lua
+Paragraph:Set({
+   Title = "New Title", 
+   Content = "The body content has been completely updated!"
+})
+
+##notifications
+Notifications
+Notifications do not belong to a specific tab; instead, they are called directly from the main JojoHub library so they can render globally across the screen.
+
+Lua
+JojoHub:Notify({
+   Title = "Notification Title",
+   Content = "This is the body content of the notification alert.",
+   Duration = 6.5, -- How many seconds the alert stays on screen before fading out
+   Image = 4483362458, -- Asset ID or Lucide name string for the alert icon. Use 0 for none.
+   Actions = { -- Adds interactive buttons directly inside the notification box
+      Ignore = {
+         Name = "Okay",
+         Callback = function()
+            print("The user clicked Okay.")
+         end
+      },
+   },
+})
