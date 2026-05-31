@@ -23,9 +23,6 @@ if secureMode then
 	print = function(...) end
 end
 
-local HubFolder = "CustomUILibrary"
-local ConfigurationExtension = ".json"
-
 local function callSafely(func, ...)
 	if func then
 		local success, result = pcall(func, ...)
@@ -33,16 +30,14 @@ local function callSafely(func, ...)
 	end
 end
 
-local function ensureFolder(folderPath)
-	if isfolder and not callSafely(isfolder, folderPath) then
-		callSafely(makefolder, folderPath)
-	end
-end
-
-ensureFolder(HubFolder)
-
 local Library = {
 	Flags = {},
+	Elements = {},
+	ConfigSettings = {
+		Enabled = false,
+		Folder = "CustomUILibrary",
+		File = "Config"
+	},
 	Theme = {
 		Background = Color3.fromRGB(24, 25, 32),
 		Sidebar = Color3.fromRGB(30, 31, 41),
@@ -56,11 +51,60 @@ local Library = {
 	}
 }
 
+function Library:SaveConfiguration()
+	if not Library.ConfigSettings.Enabled or not writefile then return end
+	local folder = Library.ConfigSettings.Folder
+	local file = Library.ConfigSettings.File
+	
+	if isfolder and not callSafely(isfolder, folder) then
+		callSafely(makefolder, folder)
+	end
+	
+	local data = {}
+	for flag, element in pairs(Library.Elements) do
+		if element.Type == "Toggle" then
+			data[flag] = element.Value
+		elseif element.Type == "Slider" then
+			data[flag] = element.Value
+		end
+	end
+	
+	callSafely(writefile, folder .. "/" .. file .. ".json", HttpService:JSONEncode(data))
+end
+
+function Library:LoadConfiguration()
+	if not Library.ConfigSettings.Enabled or not readfile then return end
+	local folder = Library.ConfigSettings.Folder
+	local file = Library.ConfigSettings.File
+	local path = folder .. "/" .. file .. ".json"
+	
+	if isfile and callSafely(isfile, path) then
+		local raw = callSafely(readfile, path)
+		if raw then
+			local success, decoded = pcall(HttpService.JSONDecode, HttpService, raw)
+			if success and type(decoded) == "table" then
+				for flag, savedValue in pairs(decoded) do
+					local element = Library.Elements[flag]
+					if element then
+						element:Set(savedValue)
+					end
+				end
+			end
+		end
+	end
+end
+
 function Library:CreateWindow(config)
 	config = config or {}
 	local windowName = config.Name or "Library Suite"
 	local windowVersion = config.Version or "v1.0.0"
 	local toggleKey = config.ToggleUIKeybind or "K"
+	
+	if config.ConfigurationSaving then
+		Library.ConfigSettings.Enabled = config.ConfigurationSaving.Enabled or false
+		Library.ConfigSettings.Folder = config.ConfigurationSaving.FolderName or "CustomUILibrary"
+		Library.ConfigSettings.File = config.ConfigurationSaving.FileName or "Config"
+	end
 	
 	if typeof(toggleKey) == "string" then
 		toggleKey = Enum.KeyCode[toggleKey:upper()]
@@ -423,6 +467,7 @@ function Library:CreateWindow(config)
 			local text = options.Name or "Toggle"
 			local toggled = options.Default or false
 			local callback = options.Callback or function() end
+			local flag = options.Flag
 
 			local ToggleBg = Instance.new("Frame")
 			ToggleBg.Size = UDim2.new(1, -10, 0, 38)
@@ -473,14 +518,33 @@ function Library:CreateWindow(config)
 			ClickButton.Text = ""
 			ClickButton.Parent = ToggleBg
 
-			local function updateToggle()
-				local targetColor = toggled and Library.Theme.ToggleOn or Library.Theme.ToggleOff
-				local targetPos = toggled and UDim2.new(1, -14, 0.5, -5) or UDim2.new(0, 4, 0.5, -5)
+			local ToggleObject = {Type = "Toggle", Value = toggled}
+
+			local function updateToggle(isLoad)
+				local targetColor = ToggleObject.Value and Library.Theme.ToggleOn or Library.Theme.ToggleOff
+				local targetPos = ToggleObject.Value and UDim2.new(1, -14, 0.5, -5) or UDim2.new(0, 4, 0.5, -5)
 
 				TweenService:Create(StatusBox, TweenInfo.new(0.2), {BackgroundColor3 = targetColor}):Play()
 				TweenService:Create(Circle, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {Position = targetPos}):Play()
 
-				task.spawn(callback, toggled)
+				if flag then
+					Library.Flags[flag] = ToggleObject.Value
+				end
+				
+				if not isLoad then
+					Library:SaveConfiguration()
+				end
+				task.spawn(callback, ToggleObject.Value)
+			end
+
+			function ToggleObject:Set(bool)
+				ToggleObject.Value = bool
+				updateToggle(true)
+			end
+
+			if flag then
+				Library.Flags[flag] = toggled
+				Library.Elements[flag] = ToggleObject
 			end
 
 			ClickButton.MouseEnter:Connect(function()
@@ -491,8 +555,8 @@ function Library:CreateWindow(config)
 			end)
 
 			ClickButton.MouseButton1Click:Connect(function()
-				toggled = not toggled
-				updateToggle()
+				ToggleObject.Value = not ToggleObject.Value
+				updateToggle(false)
 			end)
 		end
 
@@ -503,6 +567,7 @@ function Library:CreateWindow(config)
 			local max = options.Max or 100
 			local default = options.Default or min
 			local callback = options.Callback or function() end
+			local flag = options.Flag
 
 			local SliderBg = Instance.new("Frame")
 			SliderBg.Size = UDim2.new(1, -10, 0, 45)
@@ -560,29 +625,53 @@ function Library:CreateWindow(config)
 			FillCorner.CornerRadius = UDim.new(1, 0)
 			FillCorner.Parent = SliderFill
 
+			local SliderObject = {Type = "Slider", Value = default}
 			local Sliding = false
 
-			local function move(input)
-				local absPos = SliderTrack.AbsolutePosition.X
-				local absSize = SliderTrack.AbsoluteSize.X
-				local scale = math.clamp((input.Position.X - absPos) / absSize, 0, 1)
-				local value = math.floor(min + (max - min) * scale)
+			local function move(input, isLoad)
+				local scale
+				if input then
+					local absPos = SliderTrack.AbsolutePosition.X
+					local absSize = SliderTrack.AbsoluteSize.X
+					scale = math.clamp((input.Position.X - absPos) / absSize, 0, 1)
+					SliderObject.Value = math.floor(min + (max - min) * scale)
+				else
+					scale = math.clamp((SliderObject.Value - min) / (max - min), 0, 1)
+				end
 
 				SliderFill.Size = UDim2.new(scale, 0, 1, 0)
-				ValueLabel.Text = tostring(value)
-				task.spawn(callback, value)
+				ValueLabel.Text = tostring(SliderObject.Value)
+				
+				if flag then
+					Library.Flags[flag] = SliderObject.Value
+				end
+				
+				if not isLoad then
+					Library:SaveConfiguration()
+				end
+				task.spawn(callback, SliderObject.Value)
+			end
+
+			function SliderObject:Set(val)
+				SliderObject.Value = math.clamp(val, min, max)
+				move(nil, true)
+			end
+
+			if flag then
+				Library.Flags[flag] = default
+				Library.Elements[flag] = SliderObject
 			end
 
 			SliderTrack.InputBegan:Connect(function(input)
 				if input.UserInputType == Enum.UserInputType.MouseButton1 then
 					Sliding = true
-					move(input)
+					move(input, false)
 				end
 			end)
 
 			UserInputService.InputChanged:Connect(function(input)
 				if Sliding and input.UserInputType == Enum.UserInputType.MouseMovement then
-					move(input)
+					move(input, false)
 				end
 			end)
 
