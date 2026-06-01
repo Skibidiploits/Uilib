@@ -115,7 +115,6 @@ function Library:CreateWindow(config)
 		Visible = true
 	}
 
-	-- [[ MAIN GUI LAYER - HOOKED UP TO CORE_GUI NATIVELY ]]
 	local ScreenGui = Instance.new("ScreenGui")
 	ScreenGui.Name = "CustomLibraryUI"
 	ScreenGui.ResetOnSpawn = false
@@ -135,21 +134,18 @@ function Library:CreateWindow(config)
 	MainCorner.CornerRadius = UDim.new(0, 10)
 	MainCorner.Parent = MainFrame
 
-	-- [[ NEW FEATURE: DISCORD INTEGRATION PROMPT ]]
 	if config.Discord and config.Discord.Enabled then
 		task.spawn(function()
 			local invite = config.Discord.Invite or ""
-			-- Copy to clipboard automatically if execution framework allows it
 			if setclipboard then
 				setclipboard("https://discord.gg/" .. invite)
 			end
 			
-			-- Render top notice banner asking them to join
 			local DiscordBanner = Instance.new("Frame")
 			DiscordBanner.Name = "DiscordBanner"
 			DiscordBanner.Size = UDim2.new(1, 0, 0, 24)
 			DiscordBanner.Position = UDim2.new(0, 0, 0, -28)
-			DiscordBanner.BackgroundColor3 = Color3.fromRGB(88, 101, 242) -- Discord Blurple
+			DiscordBanner.BackgroundColor3 = Color3.fromRGB(88, 101, 242)
 			DiscordBanner.Parent = MainFrame
 			
 			local BannerCorner = Instance.new("UICorner")
@@ -174,9 +170,8 @@ function Library:CreateWindow(config)
 		end)
 	end
 
-	-- [[ NEW FEATURE: KEY SYSTEM OVERLAY GATE ]]
 	if config.KeySystem == true then
-		MainFrame.Visible = false -- Lock visibility down until correct entry
+		MainFrame.Visible = false
 		
 		local KeyGate = Instance.new("Frame")
 		KeyGate.Name = "KeyGate"
@@ -243,7 +238,6 @@ function Library:CreateWindow(config)
 		BtnCorner2.CornerRadius = UDim.new(0, 6)
 		BtnCorner2.Parent = GetKeyBtn
 		
-		-- Hooking up the events inside our closure loop
 		GetKeyBtn.MouseButton1Click:Connect(function()
 			if setclipboard and config.KeySettings and config.KeySettings.KeyLink then
 				setclipboard(config.KeySettings.KeyLink)
@@ -273,7 +267,6 @@ function Library:CreateWindow(config)
 		end)
 	end
 
-	-- [[ BASE DRAW LOGIC CONTINUES ]]
 	local Topbar = Instance.new("Frame")
 	Topbar.Name = "Topbar"
 	Topbar.Size = UDim2.new(1, 0, 0, 45)
@@ -320,11 +313,9 @@ function Library:CreateWindow(config)
 	CloseButton.MouseEnter:Connect(function()
 		TweenService:Create(CloseButton, TweenInfo.new(0.15), {TextColor3 = Color3.fromRGB(240, 70, 70)}):Play()
 	end)
-
 	CloseButton.MouseLeave:Connect(function()
 		TweenService:Create(CloseButton, TweenInfo.new(0.15), {TextColor3 = Library.Theme.TextMuted}):Play()
 	end)
-
 	CloseButton.MouseButton1Click:Connect(function()
 		ScreenGui:Destroy()
 	end)
@@ -332,7 +323,7 @@ function Library:CreateWindow(config)
 	local Sidebar = Instance.new("Frame")
 	Sidebar.Name = "Sidebar"
 	Sidebar.Size = UDim2.new(0, 170, 1, 0)
-	Sidebar.Position = UDim2.new(1, -170, 0, 0)
+	Sidebar.Position = UDim2.new(0, 0, 0, 0) -- Adjusted structural rendering anchor
 	Sidebar.BackgroundColor3 = Library.Theme.Sidebar
 	Sidebar.BorderSizePixel = 0
 	Sidebar.Parent = MainFrame
@@ -340,20 +331,6 @@ function Library:CreateWindow(config)
 	local SidebarCorner = Instance.new("UICorner")
 	SidebarCorner.CornerRadius = UDim.new(0, 10)
 	SidebarCorner.Parent = Sidebar
-
-	local SidebarFix = Instance.new("Frame")
-	SidebarFix.Size = UDim2.new(0, 10, 1, 0)
-	SidebarFix.Position = UDim2.new(0, 0, 0, 0)
-	SidebarFix.BackgroundColor3 = Library.Theme.Sidebar
-	SidebarFix.BorderSizePixel = 0
-	SidebarFix.Parent = Sidebar
-
-	local SidebarDivider = Instance.new("Frame")
-	SidebarDivider.Size = UDim2.new(0, 1, 1, -20)
-	SidebarDivider.Position = UDim2.new(0, 0, 0, 10)
-	SidebarDivider.BackgroundColor3 = Color3.fromRGB(45, 46, 60)
-	SidebarDivider.BorderSizePixel = 0
-	SidebarDivider.Parent = Sidebar
 
 	local TabButtonContainer = Instance.new("ScrollingFrame")
 	TabButtonContainer.Name = "TabButtonContainer"
@@ -420,7 +397,7 @@ function Library:CreateWindow(config)
 	local ContentArea = Instance.new("Frame")
 	ContentArea.Name = "ContentArea"
 	ContentArea.Size = UDim2.new(1, -190, 1, -65)
-	ContentArea.Position = UDim2.new(0, 15, 0, 55)
+	ContentArea.Position = UDim2.new(0, 180, 0, 55) -- Position alignment fixed inside layout
 	ContentArea.BackgroundTransparency = 1
 	ContentArea.Parent = MainFrame
 
@@ -459,7 +436,6 @@ function Library:CreateWindow(config)
 
 	UserInputService.InputBegan:Connect(function(input, processed)
 		if not processed and input.KeyCode == toggleKey then
-			-- Only allow toggling window if the key gate isn't currently open
 			if not ScreenGui:FindFirstChild("KeyGate") then
 				WindowData.Visible = not WindowData.Visible
 				MainFrame.Visible = WindowData.Visible
@@ -507,7 +483,7 @@ function Library:CreateWindow(config)
 
 		local TabLabel = Instance.new("TextLabel")
 		TabLabel.Size = UDim2.new(1, -12, 1, 0)
-		TabLabel.Position = UDim2.new(0, 8)
+		TabLabel.Position = UDim2.new(0, 8, 0, 0)
 		TabLabel.BackgroundTransparency = 1
 		TabLabel.Text = tabName
 		TabLabel.TextColor3 = Library.Theme.TextMuted
@@ -532,10 +508,7 @@ function Library:CreateWindow(config)
 			end
 
 			activeTab = TabData
-			-- If key system is working behind the scenes, don't force page view until cleared
-			if not ScreenGui:FindFirstChild("KeyGate") then
-				TabPage.Visible = true
-			end
+			TabPage.Visible = true -- Force element display loop alignment explicitly
 			TweenService:Create(TabButton, TweenInfo.new(0.2), {BackgroundColor3 = Library.Theme.ElementBg, BackgroundTransparency = 0}):Play()
 			TweenService:Create(TabLabel, TweenInfo.new(0.2), {TextColor3 = Library.Theme.Text}):Play()
 		end
@@ -547,7 +520,6 @@ function Library:CreateWindow(config)
 				TweenService:Create(TabLabel, TweenInfo.new(0.15), {TextColor3 = Library.Theme.Text}):Play()
 			end
 		end)
-
 		ClickArea.MouseLeave:Connect(function()
 			if activeTab ~= TabData then
 				TweenService:Create(TabLabel, TweenInfo.new(0.15), {TextColor3 = Library.Theme.TextMuted}):Play()
@@ -678,7 +650,6 @@ function Library:CreateWindow(config)
 				if flag then
 					Library.Flags[flag] = ToggleObject.Value
 				end
-				
 				if not isLoad then
 					Library:SaveConfiguration()
 				end
@@ -701,7 +672,6 @@ function Library:CreateWindow(config)
 			ClickButton.MouseLeave:Connect(function()
 				TweenService:Create(ToggleBg, TweenInfo.new(0.15), {BackgroundColor3 = Library.Theme.ElementBg}):Play()
 			end)
-
 			ClickButton.MouseButton1Click:Connect(function()
 				ToggleObject.Value = not ToggleObject.Value
 				updateToggle(false)
@@ -711,12 +681,10 @@ function Library:CreateWindow(config)
 		function TabData:CreateSlider(options)
 			options = options or {}
 			local text = options.Name or "Slider"
-			
 			local rangeTable = options.Range or {0, 100}
 			local min = rangeTable[1] or 0
 			local max = rangeTable[2] or 100
 			local default = options.CurrentValue or min
-			
 			local callback = options.Callback or function() end
 			local flag = options.Flag
 
@@ -796,7 +764,6 @@ function Library:CreateWindow(config)
 				if flag then
 					Library.Flags[flag] = SliderObject.Value
 				end
-				
 				if not isLoad then
 					Library:SaveConfiguration()
 				end
@@ -819,16 +786,14 @@ function Library:CreateWindow(config)
 					move(input, false)
 				end
 			end)
-
+			SliderTrack.InputEnded:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.MouseButton1 then
+					Sliding = false
+				end
+			end)
 			UserInputService.InputChanged:Connect(function(input)
 				if Sliding and input.UserInputType == Enum.UserInputType.MouseMovement then
 					move(input, false)
-				end
-			end)
-
-			UserInputService.InputEnded:Connect(function(input)
-				if input.UserInputType == Enum.UserInputType.MouseButton1 then
-					Sliding = false
 				end
 			end)
 		end
