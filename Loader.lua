@@ -115,6 +115,7 @@ function Library:CreateWindow(config)
 		Visible = true
 	}
 
+	-- [[ MAIN GUI LAYER ]]
 	local ScreenGui = Instance.new("ScreenGui")
 	ScreenGui.Name = "CustomLibraryUI"
 	ScreenGui.ResetOnSpawn = false
@@ -133,6 +134,145 @@ function Library:CreateWindow(config)
 	MainCorner.CornerRadius = UDim.new(0, 10)
 	MainCorner.Parent = MainFrame
 
+	-- [[ NEW FEATURE: DISCORD INTEGRATION PROMPT ]]
+	if config.Discord and config.Discord.Enabled then
+		task.spawn(function()
+			local invite = config.Discord.Invite or ""
+			-- Copy to clipboard automatically if execution framework allows it
+			if setclipboard then
+				setclipboard("https://discord.gg/" .. invite)
+			end
+			
+			-- Render top notice banner asking them to join
+			local DiscordBanner = Instance.new("Frame")
+			DiscordBanner.Name = "DiscordBanner"
+			DiscordBanner.Size = UDim2.new(1, 0, 0, 24)
+			DiscordBanner.Position = UDim2.new(0, 0, 0, -28)
+			DiscordBanner.BackgroundColor3 = Color3.fromRGB(88, 101, 242) -- Discord Blurple
+			DiscordBanner.Parent = MainFrame
+			
+			local BannerCorner = Instance.new("UICorner")
+			BannerCorner.CornerRadius = UDim.new(0, 6)
+			BannerCorner.Parent = DiscordBanner
+			
+			local BannerText = Instance.new("TextLabel")
+			BannerText.Size = UDim2.new(1, 0, 1, 0)
+			BannerText.BackgroundTransparency = 1
+			BannerText.Text = "Discord invite copied to clipboard! (discord.gg/" .. invite .. ")"
+			BannerText.TextColor3 = Color3.fromRGB(255, 255, 255)
+			BannerText.Font = Enum.Font.GothamMedium
+			BannerText.TextSize = 11
+			BannerText.Parent = DiscordBanner
+			
+			task.delay(6, function()
+				TweenService:Create(DiscordBanner, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
+				TweenService:Create(BannerText, TweenInfo.new(0.5), {TextTransparency = 1}):Play()
+				task.wait(0.5)
+				DiscordBanner:Destroy()
+			end)
+		end)
+	end
+
+	-- [[ NEW FEATURE: KEY SYSTEM OVERLAY GATE ]]
+	if config.KeySystem == true then
+		MainFrame.Visible = false -- Lock visibility down until correct entry
+		
+		local KeyGate = Instance.new("Frame")
+		KeyGate.Name = "KeyGate"
+		KeyGate.Size = UDim2.new(0, 350, 0, 200)
+		KeyGate.Position = UDim2.new(0.5, -175, 0.5, -100)
+		KeyGate.BackgroundColor3 = Library.Theme.Sidebar
+		KeyGate.BorderSizePixel = 0
+		KeyGate.Parent = ScreenGui
+		
+		local GateCorner = Instance.new("UICorner")
+		GateCorner.CornerRadius = UDim.new(0, 8)
+		GateCorner.Parent = KeyGate
+		
+		local GateTitle = Instance.new("TextLabel")
+		GateTitle.Size = UDim2.new(1, 0, 0, 40)
+		GateTitle.BackgroundTransparency = 1
+		GateTitle.Text = "Key Verification Required"
+		GateTitle.TextColor3 = Library.Theme.Text
+		GateTitle.Font = Enum.Font.GothamBold
+		GateTitle.TextSize = 16
+		GateTitle.Parent = KeyGate
+		
+		local KeyInput = Instance.new("TextBox")
+		KeyInput.Size = UDim2.new(1, -40, 0, 36)
+		KeyInput.Position = UDim2.new(0, 20, 0, 60)
+		KeyInput.BackgroundColor3 = Library.Theme.ElementBg
+		KeyInput.BorderSizePixel = 0
+		KeyInput.PlaceholderText = "Enter verification key here..."
+		KeyInput.Text = ""
+		KeyInput.TextColor3 = Library.Theme.Text
+		KeyInput.Font = Enum.Font.GothamMedium
+		KeyInput.TextSize = 13
+		KeyInput.Parent = KeyGate
+		
+		local InputCorner = Instance.new("UICorner")
+		InputCorner.CornerRadius = UDim.new(0, 6)
+		InputCorner.Parent = KeyInput
+		
+		local VerifyBtn = Instance.new("TextButton")
+		VerifyBtn.Size = UDim2.new(0, 140, 0, 36)
+		VerifyBtn.Position = UDim2.new(0, 20, 0, 120)
+		VerifyBtn.BackgroundColor3 = Library.Theme.Accent
+		VerifyBtn.Text = "Verify Key"
+		VerifyBtn.TextColor3 = Library.Theme.Text
+		VerifyBtn.Font = Enum.Font.GothamBold
+		VerifyBtn.TextSize = 13
+		VerifyBtn.Parent = KeyGate
+		
+		local BtnCorner1 = Instance.new("UICorner")
+		BtnCorner1.CornerRadius = UDim.new(0, 6)
+		BtnCorner1.Parent = VerifyBtn
+		
+		local GetKeyBtn = Instance.new("TextButton")
+		GetKeyBtn.Size = UDim2.new(0, 140, 0, 36)
+		GetKeyBtn.Position = UDim2.new(1, -160, 0, 120)
+		GetKeyBtn.BackgroundColor3 = Library.Theme.ElementBg
+		GetKeyBtn.Text = "Get Key Link"
+		GetKeyBtn.TextColor3 = Library.Theme.TextMuted
+		GetKeyBtn.Font = Enum.Font.GothamMedium
+		GetKeyBtn.TextSize = 13
+		GetKeyBtn.Parent = KeyGate
+		
+		local BtnCorner2 = Instance.new("UICorner")
+		BtnCorner2.CornerRadius = UDim.new(0, 6)
+		BtnCorner2.Parent = GetKeyBtn
+		
+		-- Hooking up the events inside our closure loop
+		GetKeyBtn.MouseButton1Click:Connect(function()
+			if setclipboard and config.KeySettings and config.KeySettings.KeyLink then
+				setclipboard(config.KeySettings.KeyLink)
+				GetKeyBtn.Text = "Copied Link!"
+				task.wait(2)
+				GetKeyBtn.Text = "Get Key Link"
+			end
+		end)
+		
+		VerifyBtn.MouseButton1Click:Connect(function()
+			local inputText = KeyInput.Text
+			local acceptedKeys = (config.KeySettings and config.KeySettings.Keys) or {"DefaultKey123"}
+			
+			if table.find(acceptedKeys, inputText) then
+				VerifyBtn.BackgroundColor3 = Library.Theme.ToggleOn
+				VerifyBtn.Text = "Access Granted!"
+				task.wait(0.5)
+				KeyGate:Destroy()
+				MainFrame.Visible = WindowData.Visible
+			else
+				VerifyBtn.BackgroundColor3 = Color3.fromRGB(240, 70, 70)
+				VerifyBtn.Text = "Invalid Key!"
+				task.wait(1.5)
+				VerifyBtn.BackgroundColor3 = Library.Theme.Accent
+				VerifyBtn.Text = "Verify Key"
+			end
+		end)
+	end
+
+	-- [[ BASE DRAW LOGIC CONTINUES ]]
 	local Topbar = Instance.new("Frame")
 	Topbar.Name = "Topbar"
 	Topbar.Size = UDim2.new(1, 0, 0, 45)
@@ -318,8 +458,11 @@ function Library:CreateWindow(config)
 
 	UserInputService.InputBegan:Connect(function(input, processed)
 		if not processed and input.KeyCode == toggleKey then
-			WindowData.Visible = not WindowData.Visible
-			MainFrame.Visible = WindowData.Visible
+			-- Only allow toggling window if the key gate isn't currently open
+			if not ScreenGui:FindFirstChild("KeyGate") then
+				WindowData.Visible = not WindowData.Visible
+				MainFrame.Visible = WindowData.Visible
+			end
 		end
 	end)
 
@@ -388,7 +531,10 @@ function Library:CreateWindow(config)
 			end
 
 			activeTab = TabData
-			TabPage.Visible = true
+			-- If key system is working behind the scenes, don't force page view until cleared
+			if not ScreenGui:FindFirstChild("KeyGate") then
+				TabPage.Visible = true
+			end
 			TweenService:Create(TabButton, TweenInfo.new(0.2), {BackgroundColor3 = Library.Theme.ElementBg, BackgroundTransparency = 0}):Play()
 			TweenService:Create(TabLabel, TweenInfo.new(0.2), {TextColor3 = Library.Theme.Text}):Play()
 		end
@@ -466,7 +612,7 @@ function Library:CreateWindow(config)
 		function TabData:CreateToggle(options)
 			options = options or {}
 			local text = options.Name or "Toggle"
-			local toggled = options.CurrentValue or false -- UPDATED: Now supports CurrentValue from documentation
+			local toggled = options.CurrentValue or false
 			local callback = options.Callback or function() end
 			local flag = options.Flag
 
@@ -565,11 +711,10 @@ function Library:CreateWindow(config)
 			options = options or {}
 			local text = options.Name or "Slider"
 			
-			-- UPDATED: Pulls Min and Max from your documented Range array style {0, 100}
 			local rangeTable = options.Range or {0, 100}
 			local min = rangeTable[1] or 0
 			local max = rangeTable[2] or 100
-			local default = options.CurrentValue or min -- UPDATED: Uses CurrentValue from documentation
+			local default = options.CurrentValue or min
 			
 			local callback = options.Callback or function() end
 			local flag = options.Flag
@@ -690,7 +835,7 @@ function Library:CreateWindow(config)
 		function TabData:CreateKeybind(options)
 			options = options or {}
 			local text = options.Name or "Keybind"
-			local currentKey = options.CurrentKeybind or "None" -- UPDATED: Uses CurrentKeybind from documentation
+			local currentKey = options.CurrentKeybind or "None"
 			local callback = options.Callback or function() end
 
 			if typeof(currentKey) == "EnumItem" then
